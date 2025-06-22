@@ -1,0 +1,36 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
+.mvn/wrapper/maven-wrapper.js*
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# VSCode
+.vscode/
+
+# Logs
+*.log
+
+# Allure reports
+allure-results/
+allure-report/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Java build files
+*.class
+
+# Environment
+.env
+
+# Test artifacts
+surefire-reports/
+test-output/
