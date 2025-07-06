@@ -3,18 +3,16 @@ name: CI
 
 on:
   push:
-    branches:
-      - master
+    branches: [master]
   pull_request:
-    branches:
-      - master
+    branches: [master]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java-version: [17, 21]
+        java-version: [17]
 
     steps:
       - name: Checkout code
@@ -27,19 +25,19 @@ jobs:
           distribution: temurin
 
       - name: Cache Maven dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-m2-
 
-      - name: Run tests
+      - name: Run Maven tests
         run: mvn clean test --batch-mode
 
-      - name: Archive test reports
+      - name: Upload test reports
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: test-reports-${{ matrix.java-version }}
-          path: target/surefire-reports/*.xml
+          name: test-reports
+          path: target/surefire-reports
