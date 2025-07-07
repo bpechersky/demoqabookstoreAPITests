@@ -8,6 +8,8 @@ import org.json.JSONObject;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.List;
+
 import static io.restassured.RestAssured.given;
 
 public class AddBookUpdateBookDeleteAllBooksFromUserCollection {
@@ -18,30 +20,43 @@ public class AddBookUpdateBookDeleteAllBooksFromUserCollection {
     private static final String ISBN = "9781449331818";
 
     @Test(priority = 1)
-    public void addBookToUserCollection() {
-        RestAssured.baseURI = BASE_URL;
+    public void addBookTest() {
 
-        JSONObject book = new JSONObject().put("isbn", ISBN);
-        JSONArray collection = new JSONArray().put(book);
-
-        JSONObject requestBody = new JSONObject()
-                .put("userId", USER_ID)
-                .put("collectionOfIsbns", collection);
+        String payload = """
+        {
+          "userId": "%s",
+          "collectionOfIsbns": [
+            {
+              "isbn": "%s"
+            }
+          ]
+        }
+        """.formatted(USER_ID, ISBN);
 
         Response response = given()
-                .contentType(ContentType.JSON)
+                .baseUri("https://demoqa.com")
+                .basePath("/BookStore/v1/Books")
                 .header("Authorization", "Bearer " + TOKEN)
-                .body(requestBody.toString())
+                .contentType("application/json")
+                .body(payload)
                 .when()
-                .post("/BookStore/v1/Books");
+                .post()
+                .then()
+                .statusCode(201)
+                .extract().response();
 
-        System.out.println("Add Book Response:\n" + response.asPrettyString());
+        // Validate response body
+        String responseUserId = response.jsonPath().getString("userId");
+        List<String> isbns = response.jsonPath().getList("books.isbn");
 
-        Assert.assertEquals(response.getStatusCode(), 201);
+        Assert.assertTrue(isbns.contains(ISBN), "ISBN should be in the response");
     }
+
+
     @Test(priority = 2)
-    public void updateBookIsbnTest() {
+    public void updateBookIsbnTestEnhanced() {
         String userId = "bc8d7642-7a52-45ab-b188-5ecbb4484937";
+        String username = "bpechersky111";
         String oldIsbn = "9781449331818";
         String newIsbn = "9781449325862";
         String token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyTmFtZSI6ImJwZWNoZXJza3kxMTEiLCJwYXNzd29yZCI6IkJ1ZG1hbjE5NjchISEiLCJpYXQiOjE3NTE5MTA5NjZ9.4aNIfK48CyV_tKDlm3tyOcpzHSuK1KboMh72MGSn39Q";
@@ -53,18 +68,37 @@ public class AddBookUpdateBookDeleteAllBooksFromUserCollection {
         }
         """.formatted(userId, newIsbn);
 
-        given()
+        Response response = given()
                 .baseUri("https://demoqa.com")
                 .basePath("/BookStore/v1/Books/" + oldIsbn)
                 .header("Authorization", "Bearer " + token)
-                .header("Content-Type", "application/json")
+                .contentType("application/json")
                 .header("accept", "application/json")
                 .body(payload)
                 .when()
                 .put()
                 .then()
-                .statusCode(200); // OK
+                .statusCode(200)
+                .extract().response();
+
+        // Response Body Validation
+        String actualUserId = response.jsonPath().getString("userId");
+        String actualUsername = response.jsonPath().getString("username");
+        String actualIsbn = response.jsonPath().getString("books[0].isbn");
+        String title = response.jsonPath().getString("books[0].title");
+        String author = response.jsonPath().getString("books[0].author");
+        int pages = response.jsonPath().getInt("books[0].pages");
+
+        Assert.assertEquals(actualUserId, userId, "User ID should match");
+        Assert.assertEquals(actualUsername, username, "Username should match");
+        Assert.assertEquals(actualIsbn, newIsbn, "ISBN should be updated");
+        Assert.assertEquals(title, "Git Pocket Guide", "Title should match");
+        Assert.assertEquals(author, "Richard E. Silverman", "Author should match");
+        Assert.assertEquals(pages, 234, "Page count should match");
     }
+
+
+
 
     @Test(priority = 3)
     public void deleteAllBooksTest() {
